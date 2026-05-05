@@ -1,0 +1,7 @@
+fastapi==0.136.0
+uvicorn==0.45.0
+pandas==3.0.2
+numpy==2.4.4
+meilisearch==0.40.0
+requests==2.33.1
+python-dotenv==1.2.2
