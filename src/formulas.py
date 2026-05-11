@@ -42,4 +42,4 @@ def calculate_boosts(in_stock: bool, is_sale: bool, is_new: bool) -> float:
 
 def calculate_final_score(popularity: float, novelty: float, boost: float) -> float:
     """Итоговая формула ранжирования"""
-    return math.log(1 + popularity) * (novelty / NOVELTY_NORMALIZER) * boost
+    return math.log1p(popularity) * (novelty / NOVELTY_NORMALIZER) * boost

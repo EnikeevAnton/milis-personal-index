@@ -16,14 +16,19 @@ from formulas import (
 
 
 def extract_ordered_products(action_json):
-    """Извлекает ID купленных вариантов из заказа (онлайн/офлайн)"""
-    ordered_ids = []
+    """Извлекает ID купленных вариантов и их количество из заказа (онлайн/офлайн)"""
+    ordered_items = []
     lines = action_json.get("order", {}).get("lines", [])
     for line in lines:
         insales_id = line.get("product", {}).get("ids", {}).get("insalesId")
         if insales_id:
-            ordered_ids.append(insales_id)
-    return ordered_ids
+            quantity = line.get("quantity", 1)
+            try:
+                quantity = int(float(quantity))
+            except (ValueError, TypeError):
+                quantity = 1
+            ordered_items.append((insales_id, quantity))
+    return ordered_items
 
 
 def calculate_scores(target_date_str=None):
@@ -91,12 +96,12 @@ def calculate_scores(target_date_str=None):
                                     daily_stats[pid][day_key]['views'] += 1
 
                     elif template_sysname in ["SoxranenieZakazaVOperaciiWebsiteCreateOrder", "SoxranenieZakazaVOperaciiNewOfflineCreateAuthorizedOrder"]:
-                        ordered_ids = extract_ordered_products(action)
-                        for insales_id in ordered_ids:
+                        ordered_items = extract_ordered_products(action)
+                        for insales_id, quantity in ordered_items:
                             pid = variant_to_product.get(str(insales_id))
                             if pid:
-                                daily_stats[pid][day_key]['purchases'] += 1
-                                total_purchases_global += 1
+                                daily_stats[pid][day_key]['purchases'] += quantity
+                                total_purchases_global += quantity
         except Exception as e:
             print(f"[!] Ошибка чтения {os.path.basename(file_path)}: {e}")
 
