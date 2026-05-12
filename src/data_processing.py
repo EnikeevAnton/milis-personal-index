@@ -1,7 +1,10 @@
 import os
 import ast
 import pandas as pd
-from config import INSALES_PRODUCTS_FILE, MINDBOX_PRODUCTS_FILE, CATEGORIES_FILE
+from config import (
+    INSALES_PRODUCTS_FILE, MINDBOX_PRODUCTS_FILE, CATEGORIES_FILE,
+    ENCODING_CATALOG_MAIN, ENCODING_MINDBOX_TABLES
+)
 from formulas import calculate_boosts, calculate_final_score
 
 
@@ -21,7 +24,7 @@ def get_barcode_categories_mapping() -> dict[str, dict[str, str]]:
     print(
         f"[Data Processing] Загрузка справочника категорий {os.path.basename(CATEGORIES_FILE)}...")
     df_cat = pd.read_csv(CATEGORIES_FILE, sep=";",
-                         dtype=str, encoding="utf-8-sig")
+                         dtype=str, encoding=ENCODING_MINDBOX_TABLES)
 
     cat_id_to_name = {}
     cat_id_to_parent = {}
@@ -43,7 +46,7 @@ def get_barcode_categories_mapping() -> dict[str, dict[str, str]]:
     print(
         f"[Data Processing] Загрузка связи штрихкодов {os.path.basename(MINDBOX_PRODUCTS_FILE)}...")
     df_mb = pd.read_csv(MINDBOX_PRODUCTS_FILE, sep=";",
-                        dtype=str, encoding="utf-8-sig")
+                        dtype=str, encoding=ENCODING_MINDBOX_TABLES)
 
     barcode_to_categories = {}
 
@@ -96,12 +99,8 @@ def get_prepared_catalog():
     barcode_to_categories = get_barcode_categories_mapping()
 
     print(f"[Data Processing] Чтение файла {INSALES_PRODUCTS_FILE}...")
-    try:
-        df = pd.read_csv(INSALES_PRODUCTS_FILE, sep='\t',
-                         dtype=str, encoding='utf-16')
-    except UnicodeError:
-        df = pd.read_csv(INSALES_PRODUCTS_FILE, sep=';',
-                         dtype=str, encoding='cp1251')
+    df = pd.read_csv(INSALES_PRODUCTS_FILE, sep='\t',
+                     dtype=str, encoding=ENCODING_CATALOG_MAIN)
 
     # Очистка числовых данных
     df['Остаток'] = pd.to_numeric(
@@ -135,7 +134,8 @@ def get_prepared_catalog():
         'total_stock': ('Остаток', 'sum'),
         'colors': ('Свойство: Цвет', lambda x: list(set(x.dropna()))),
         'barcodes': ('Штрих-код', lambda x: list(set(x.dropna()))),
-        'images': ('Изображения', lambda x: str(x.iloc[0]).split() if pd.notna(
+        'variant_ids': ('ID варианта', lambda x: list(set(x.dropna()))),
+        'images': ('Изображения', lambda x: str(x.iloc[0]).split()[:2] if pd.notna(
             x.iloc[0]) and str(x.iloc[0]).strip() else [])
     }
 
@@ -173,7 +173,7 @@ def get_prepared_catalog():
         'ID товара', 'title', 'url', 'brand', 'gender',
         'category_lvl3', 'category_lvl2', 'category_lvl1', 'season',
         'price', 'old_price', 'discount', 'total_stock', 'sizes',
-        'colors', 'barcodes', 'images', 'in_stock', 'is_sale', 'is_new'
+        'colors', 'barcodes', 'variant_ids', 'images', 'in_stock', 'is_sale', 'is_new'
     ]
     grouped = grouped[ordered_columns]
 
@@ -191,6 +191,8 @@ def get_prepared_catalog():
 
         doc['barcodes'] = [str(v) for v in doc.get(
             'barcodes', []) if pd.notna(v) and str(v).strip()]
+        doc['variant_ids'] = [str(v) for v in doc.get(
+            'variant_ids', []) if pd.notna(v) and str(v).strip()]
 
         # --- Сопоставление и извлечение полной ветки категорий ---
         unique_cats = {}

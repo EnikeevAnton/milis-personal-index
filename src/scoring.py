@@ -3,7 +3,9 @@ import os
 import json
 from collections import defaultdict
 from datetime import datetime
-from config import ACTIONS_FILE_TEMPLATE, client, INDEX_NAME
+from config import (
+    ACTIONS_FILE_TEMPLATE, client, INDEX_NAME, ENCODING_MINDBOX_ACTIONS
+)
 
 from formulas import (
     POPULARITY_WINDOW,
@@ -71,7 +73,7 @@ def calculate_scores(target_date_str=None):
 
         print(f" - Парсинг: {os.path.basename(file_path)}")
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, 'r', encoding=ENCODING_MINDBOX_ACTIONS) as f:
                 data = json.load(f)
                 actions = data.get("customerActions", [])
                 for action in actions:

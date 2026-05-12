@@ -20,6 +20,11 @@ ACTIONS_FILE_TEMPLATE = os.path.join(
     "mindbox_filtered_actions_part_{index:02d}_of_18.json"
 )
 
+# encodings (кодировки файлов)
+ENCODING_CATALOG_MAIN = "utf-16"         # Основной файл shop_data
+ENCODING_MINDBOX_TABLES = "utf-8-sig"    # Таблицы Mindbox (products, categories)
+ENCODING_MINDBOX_ACTIONS = "utf-8"       # JSON логи действий пользователей
+
 # meilisearch settings
 MEILI_URL = os.getenv('MEILI_URL', 'http://localhost:7700')
 MEILI_MASTER_KEY = os.getenv('MEILI_MASTER_KEY', 'masterKey')
@@ -28,7 +33,7 @@ client = meilisearch.Client(
     MEILI_URL, MEILI_MASTER_KEY if MEILI_MASTER_KEY else None
 )
 
-# index conf
+# базовые настройки индекса
 INDEX_NAME = "kixbox_catalog"
 
 # search_ABLE
