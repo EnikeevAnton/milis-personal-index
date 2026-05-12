@@ -8,8 +8,10 @@ load_dotenv()
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 
-# каталог продуктов
+# каталоги
 INSALES_PRODUCTS_FILE = os.path.join(DATA_DIR, "shop_data-10.04.2026 2.csv")
+MINDBOX_PRODUCTS_FILE = os.path.join(DATA_DIR, "products-mindbox.csv")
+CATEGORIES_FILE = os.path.join(DATA_DIR, "categories.csv")
 
 # логи действий
 ACTIONS_DIR = os.path.join(DATA_DIR, "customers-actions")
@@ -49,7 +51,9 @@ FILTERABLE_ATTRIBUTES = [
     "is_new",
     "category_lvl1",
     "category_lvl2",
-    "category_lvl3"
+    "category_lvl3",
+    "categories",
+    "category_ids"
 ]
 
 # sort_ABLE
