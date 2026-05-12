@@ -13,7 +13,8 @@ from formulas import (
     calculate_decay,
     calculate_novelty,
     calculate_boosts,
-    calculate_final_score
+    calculate_final_score,
+    score_commercial
 )
 
 
@@ -48,7 +49,7 @@ def calculate_scores(target_date_str=None):
 
     print("[Scoring] Сборка словаря штрих-кодов из Meilisearch...")
     response = client.index(INDEX_NAME).get_documents(
-        {'limit': 100000, 'fields': ['id', 'barcodes', 'in_stock', 'is_sale', 'is_new']})
+        {'limit': 100000, 'fields': ['id', 'barcodes', 'in_stock', 'is_sale', 'is_new', 'discount']})
 
     variant_to_product = {}
     products_info = {}
@@ -62,7 +63,7 @@ def calculate_scores(target_date_str=None):
             variant_to_product[str(code)] = pid
 
     daily_stats = defaultdict(lambda: defaultdict(
-        lambda: {'views': 0, 'purchases': 0}))
+        lambda: {'views': 0, 'purchases': 0, 'carts': 0}))
     total_purchases_global = 0
 
     print(f"[Scoring] Чтение логов...")
@@ -97,6 +98,14 @@ def calculate_scores(target_date_str=None):
                                 if pid:
                                     daily_stats[pid][day_key]['views'] += 1
 
+                    elif template_sysname == "DobavlenieProduktaVSpisok":
+                        for p in action.get("products", []):
+                            insales_id = p.get("ids", {}).get("insalesId")
+                            if insales_id:
+                                pid = variant_to_product.get(str(insales_id))
+                                if pid:
+                                    daily_stats[pid][day_key]['carts'] += 1
+
                     elif template_sysname in ["SoxranenieZakazaVOperaciiWebsiteCreateOrder", "SoxranenieZakazaVOperaciiNewOfflineCreateAuthorizedOrder"]:
                         ordered_items = extract_ordered_products(action)
                         for insales_id, quantity in ordered_items:
@@ -120,6 +129,7 @@ def calculate_scores(target_date_str=None):
         popularity = 0.0
         total_v = 0
         total_p = 0
+        total_c = 0
 
         for day_str, stats in days_data.items():
             day_dt = pd.to_datetime(day_str)
@@ -128,6 +138,7 @@ def calculate_scores(target_date_str=None):
             # Собираем сырые логи для аналитики
             total_v += stats['views']
             total_p += stats['purchases']
+            total_c += stats['carts']
 
             # используем формулы (которые в отедеьном файлике)
             day_score = calculate_day_score(stats['views'], stats['purchases'])
@@ -144,17 +155,27 @@ def calculate_scores(target_date_str=None):
         is_new = getattr(doc, 'is_new', doc.get('is_new', False)
                          if isinstance(doc, dict) else False)
 
+        # Приводим скидку (0-100) к долям (0.0-1.0) для формулы
+        discount_val = getattr(doc, 'discount', doc.get('discount', 0.0) if isinstance(doc, dict) else 0.0)
+        try:
+            discount_frac = float(discount_val) / 100.0
+        except (ValueError, TypeError):
+            discount_frac = 0.0
+
         boost = calculate_boosts(in_stock, is_sale, is_new)
         final_score = calculate_final_score(popularity, novelty, boost)
+        commercial_score = score_commercial(popularity, novelty, boost, discount_frac, total_c)
 
         update_payload.append({
             'id': pid,
             'popularity': round(popularity, 4),
             'novelty': round(novelty, 4),
             'final_score': round(final_score, 4),
+            'commercial_score': round(commercial_score, 4),
             # число покупок и просмтров для аналитики
             'total_views': total_v,
-            'total_purchases': total_p
+            'total_purchases': total_p,
+            'total_carts': total_c
         })
 
     print(f"[Scoring] Отправка обновлений ({len(update_payload)} док-тов)...")

@@ -125,9 +125,9 @@ def get_prepared_catalog():
         'url': ('URL', 'first'),
         'brand': ('Параметр: Бренд', 'first'),
         'gender': ('Параметр: Пол', 'first'),
-        'category_lvl3': ('Параметр: Тип', 'first'),
-        'category_lvl2': ('Параметр: Тип2', 'first'),
-        'category_lvl1': ('Параметр: Тип3', 'first'),
+        'type1': ('Параметр: Тип', 'first'),
+        'type2': ('Параметр: Тип2', 'first'),
+        'type3': ('Параметр: Тип3', 'first'),
         'season': ('Параметр: Сезон', 'first'),
         'price': ('Цена продажи', 'min'),
         'old_price': ('Старая цена', 'max'),
@@ -171,7 +171,7 @@ def get_prepared_catalog():
     # Фиксация итогового порядка колонок
     ordered_columns = [
         'ID товара', 'title', 'url', 'brand', 'gender',
-        'category_lvl3', 'category_lvl2', 'category_lvl1', 'season',
+        'type1', 'type2', 'type3', 'season',
         'price', 'old_price', 'discount', 'total_stock', 'sizes',
         'colors', 'barcodes', 'variant_ids', 'images', 'in_stock', 'is_sale', 'is_new'
     ]
@@ -188,6 +188,13 @@ def get_prepared_catalog():
                 continue
             if pd.isna(v):
                 doc[k] = None
+
+        # Сборка типов в единый упорядоченный список
+        doc['types'] = []
+        for t_field in ['type1', 'type2', 'type3']:
+            t_val = doc.pop(t_field, None)
+            if t_val is not None and str(t_val).strip():
+                doc['types'].append(str(t_val).strip())
 
         doc['barcodes'] = [str(v) for v in doc.get(
             'barcodes', []) if pd.notna(v) and str(v).strip()]

@@ -36,6 +36,7 @@ class SortDirection(str, Enum):
 
 class SortField(str, Enum):
     final_score = "final_score"
+    commercial_score = "commercial_score"
     popularity = "popularity"
     novelty = "novelty"
     discount = "discount"
@@ -52,9 +53,7 @@ def build_search_params(
     is_sale: Optional[bool] = None,
     is_new: Optional[bool] = None,
     gender: Optional[str] = None,
-    category_lvl1: Optional[str] = None,
-    category_lvl2: Optional[str] = None,
-    category_lvl3: Optional[str] = None
+    types: Optional[str] = None
 ):
     # формируем очередь сортировки
     sort_query = f"{sort_by}:{sort_dir}"
@@ -81,12 +80,8 @@ def build_search_params(
         filters.append(f"gender = '{gender}'")
 
     # типы товаров
-    if category_lvl1:
-        filters.append(f"category_lvl1 = '{category_lvl1}'")
-    if category_lvl2:
-        filters.append(f"category_lvl2 = '{category_lvl2}'")
-    if category_lvl3:
-        filters.append(f"category_lvl3 = '{category_lvl3}'")
+    if types:
+        filters.append(f"types = '{types}'")
 
     if filters:
         params["filter"] = [" AND ".join(filters)]
@@ -167,15 +162,15 @@ def get_jackets(
     order: SortDirection = Query(
         SortDirection.desc, description="Направление"),
     in_stock: Optional[bool] = Query(True, description="Только в наличии"),
-    category_lvl2: Optional[str] = Query(
-        "Куртка", description="Средний уровень категории")
+    types: Optional[str] = Query(
+        "Куртка", description="Тип товара")
 ):
     """
-    Фильтрует товары по точному совпадению названия категории на 2-м уровне иерархии.
+    Фильтрует товары по точному совпадению типа.
     """
     params = build_search_params(limit=limit, sort_by=sort.value,
                                  sort_dir=order.value, in_stock=in_stock,
-                                 category_lvl2=category_lvl2)
+                                 types=types)
     result = client.index(INDEX_NAME).search("", params)
     return {"query_params": params, "hits": result.get("hits", [])}
 
@@ -193,12 +188,8 @@ def custom_search(
     is_new: Optional[bool] = Query(
         None, description="Фильтр по новым коллекциям"),
     gender: Optional[GenderEnum] = Query(None),
-    category_lvl1: Optional[str] = Query(
-        None, description="Верхний уровень (напр. Одежда)"),
-    category_lvl2: Optional[str] = Query(
-        None, description="Средний уровень (напр. Верхняя одежда)"),
-    category_lvl3: Optional[str] = Query(
-        None, description="Нижний уровень (напр. Ветровки)")
+    types: Optional[str] = Query(
+        None, description="Тип товара (напр. Куртка)")
 ):
     """
     Свободный поиск без предустановленных фильтров для проверки работы всех параметров.
@@ -212,9 +203,7 @@ def custom_search(
         is_sale=is_sale,
         is_new=is_new,
         gender=gender_val,
-        category_lvl1=category_lvl1,
-        category_lvl2=category_lvl2,
-        category_lvl3=category_lvl3
+        types=types
     )
 
     result = client.index(INDEX_NAME).search(q, params)

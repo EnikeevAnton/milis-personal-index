@@ -1,17 +1,29 @@
 import math
 
 # --- Настройки скоринга ---
+
+# коэф. действий для popularity
 W_VIEWS = 0.3
 W_PURCHASES = 0.7
 
+# константа затухания (дни)
 HALF_LIFE = 30
+
+# окно от целевой даты <T> (дни)
 POPULARITY_WINDOW = 30
 
+# базовые бизнес-бусты
 BOOST_IN_STOCK = 1.5
 BOOST_OUT_OF_STOCK = 0.05
 BOOST_SALE = 1.2
 BOOST_NEW_ARRIVAL = 1
+
+# коэф. нормализации novelty при расчете final_score
 NOVELTY_NORMALIZER = 14.0
+
+# используются для commercial_score
+CART_WEIGHT = 0.5
+DISCOUNT_WEIGHT = 0.5
 
 
 def calculate_day_score(views: int, purchases: int) -> float:
@@ -43,3 +55,10 @@ def calculate_boosts(in_stock: bool, is_sale: bool, is_new: bool) -> float:
 def calculate_final_score(popularity: float, novelty: float, boost: float) -> float:
     """Итоговая формула ранжирования"""
     return math.log1p(popularity) * (novelty / NOVELTY_NORMALIZER) * boost
+
+
+def score_commercial(popularity: float, novelty: float, boost: float, discount: float, carts: int = 0) -> float:
+    """Коммерческий: Учет корзины и скидок."""
+    cart_factor = math.log1p(carts * CART_WEIGHT) 
+    discount_boost = 1.0 + (discount * DISCOUNT_WEIGHT)
+    return (math.log1p(popularity) + cart_factor) * (novelty / NOVELTY_NORMALIZER) * boost * discount_boost

@@ -22,7 +22,8 @@ ACTIONS_FILE_TEMPLATE = os.path.join(
 
 # encodings (кодировки файлов)
 ENCODING_CATALOG_MAIN = "utf-16"         # Основной файл shop_data
-ENCODING_MINDBOX_TABLES = "utf-8-sig"    # Таблицы Mindbox (products, categories)
+# Таблицы Mindbox (products, categories)
+ENCODING_MINDBOX_TABLES = "utf-8-sig"
 ENCODING_MINDBOX_ACTIONS = "utf-8"       # JSON логи действий пользователей
 
 # meilisearch settings
@@ -54,9 +55,7 @@ FILTERABLE_ATTRIBUTES = [
     "in_stock",
     "is_sale",
     "is_new",
-    "category_lvl1",
-    "category_lvl2",
-    "category_lvl3",
+    "types",
     "categories",
     "category_ids"
 ]
@@ -64,6 +63,7 @@ FILTERABLE_ATTRIBUTES = [
 # sort_ABLE
 SORTABLE_ATTRIBUTES = [
     "final_score",
+    "commercial_score",
     "popularity",
     "novelty",
     "price",
