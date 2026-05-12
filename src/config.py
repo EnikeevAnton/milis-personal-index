@@ -1,11 +1,12 @@
 import os
 import meilisearch
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
 
 # paths
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).parent.parent.absolute()
 DATA_DIR = os.path.join(BASE_DIR, "data")
 
 # каталоги
@@ -19,6 +20,14 @@ ACTIONS_FILE_TEMPLATE = os.path.join(
     ACTIONS_DIR,
     "mindbox_filtered_actions_part_{index:02d}_of_18.json"
 )
+
+# настройки времени и метрик оценки ранжирования
+# Верхняя граница (настоящее время) для скоринга и логов
+TARGET_DATE = "2026-04-09 23:59:59"
+# Размер тестового окна для Time-Split (расчет метрик)
+EVALUATION_TEST_DAYS = 7
+# Глубина (Топ-K) для оценки метрик (Precision@K, NDCG@K и т.д.)
+EVALUATION_TOP_K = 30
 
 # encodings (кодировки файлов)
 ENCODING_CATALOG_MAIN = "utf-16"         # Основной файл shop_data

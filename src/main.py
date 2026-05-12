@@ -1,15 +1,27 @@
-from config import INDEX_NAME
-from setup_meilisearch import setup_index
-from data_processing import get_prepared_catalog
-from load_data import upload_documents_to_meilisearch
-from scoring import calculate_scores
-
-# дата и время, которое является верхней границей для фильтрации событий
-TARGET_DATE = "2026-04-09 23:59:59"
+import sys
+from pathlib import Path
 
 
-# main функция запуска полного пайплайна: от извлечения данных из табличек, до построения построения индекса и расчета скоров
-def main():
+src_path = Path(__file__).resolve().parent
+if str(src_path) not in sys.path:
+    sys.path.insert(0, str(src_path))
+
+
+# fmt: off
+# isort: off
+from config import INDEX_NAME, TARGET_DATE  # noqa: E402
+from etl.setup_meilisearch import setup_index  # noqa: E402
+from etl.data_processing import get_prepared_catalog  # noqa: E402
+from etl.load_data import upload_documents_to_meilisearch  # noqa: E402
+from engine.scoring import calculate_scores  # noqa: E402
+# isort: on
+# fmt: on
+
+# функция запуска полного пайплайна: от извлечения данных из табличек,
+#                                    до построения индекса и расчета скоров
+
+
+def main(target_date_str=None, history_days=None):
     print("=== ЗАПУСК ПАЙПЛАЙНА MEILISEARCH & SCORING ===")
 
     print("\n--- ЭТАП 1: Настройка движка ---")
@@ -27,12 +39,13 @@ def main():
 
     print("\n--- ЭТАП 4: Расчет Скоринга (Scoring Engine) ---")
 
-    # target_date_str = get_target_date()
-    target_date_str = TARGET_DATE
+    target_date_to_use = target_date_str if target_date_str else TARGET_DATE
 
-    print(f"[*] Целевая дата (T) установлена на: {target_date_str}")
+    print(f"[*] Целевая дата (T) установлена на: {target_date_to_use}")
+    if history_days is not None:
+        print(f"[*] Окно истории (дни) установлено на: {history_days}")
 
-    calculate_scores(target_date_str)
+    calculate_scores(target_date_to_use, history_days)
 
     print("\n=== ПАЙПЛАЙН УСПЕШНО ЗАВЕРШЕН ===")
 

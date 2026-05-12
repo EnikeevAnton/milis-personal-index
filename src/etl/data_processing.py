@@ -5,8 +5,7 @@ from config import (
     INSALES_PRODUCTS_FILE, MINDBOX_PRODUCTS_FILE, CATEGORIES_FILE,
     ENCODING_CATALOG_MAIN, ENCODING_MINDBOX_TABLES
 )
-from formulas import calculate_boosts, calculate_final_score
-
+from engine.formulas import calculate_boosts, calculate_final_score
 
 def normalize_id(value) -> str:
     """Очищает ID от концевых пробелов и пустых значений."""
@@ -211,9 +210,6 @@ def get_prepared_catalog():
         # Гарантированное сохранение индексов: каждой id_категории строго соответствует её название
         doc['category_ids'] = list(unique_cats.keys())
         doc['categories'] = list(unique_cats.values())
-
-        doc['total_views'] = 0
-        doc['total_purchases'] = 0
         doc['popularity'] = 0.0
         doc['novelty'] = 14.0
 
